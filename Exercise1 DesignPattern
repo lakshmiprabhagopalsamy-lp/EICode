@@ -1,12 +1,7 @@
-//Main Application 
 public class CarRentalApp { 
     public static void main(String[] args) {
         java.util.Scanner sc = new java.util.Scanner(System.in);
-
-        // Singleton Pattern (Creational)
         RentalManager manager = RentalManager.getInstance();
-
-        // Strategy Pattern (Behavioral) - 
         manager.addCustomer("Alice", new EmailNotification());
         manager.addCustomer("Bob", new SMSNotification());
 
@@ -61,7 +56,6 @@ public class CarRentalApp {
     }
 }
 
-// ------------------- Car class -------------------
 
 class Car {
     private String model;
@@ -86,7 +80,6 @@ class Car {
     }
 }
 
-//Builder Pattern (Creational)
 class CarBuilder {
     private String model;
     private String type;
@@ -105,8 +98,6 @@ class CarBuilder {
         return new Car(model, type);
     }
 }
-
-// Strategy Pattern (Behavioral) 
 interface NotificationStrategy {
     void notify(String message, String customerName);
 }
@@ -122,8 +113,6 @@ class SMSNotification implements NotificationStrategy {
         System.out.println("SMS to " + customerName + ": " + message);
     }
 }
-
-//Singleton: Rental Manager (Creational) 
 class RentalManager {
     private static RentalManager instance;
     private java.util.List<Car> cars;
@@ -141,25 +130,23 @@ class RentalManager {
         return instance;
     }
 
-    // Add customer with notification strategy (Strategy Pattern)
     public void addCustomer(String name, NotificationStrategy strategy) {
         customerNotifications.put(name, strategy);
     }
 
-    // Notify all customers (Strategy Pattern)
     private void notifyCustomers(String message) {
         for (java.util.Map.Entry<String, NotificationStrategy> entry : customerNotifications.entrySet()) {
             entry.getValue().notify(message, entry.getKey());
         }
     }
 
-    // Add a new car
+  
     public void addCar(Car car) {
         cars.add(car);
         System.out.println("Car added: " + car.getModel());
     }
 
-    // View all cars
+   
     public void viewCars() {
         if (cars.isEmpty()) {
             System.out.println("No cars available in the system.");
@@ -170,7 +157,6 @@ class RentalManager {
         }
     }
 
-    // Rent a car
     public void rentCar(String model) {
         for (Car c : cars) {
             if (c.getModel().equalsIgnoreCase(model)) {
@@ -187,7 +173,7 @@ class RentalManager {
         System.out.println("Error: Car not found.");
     }
 
-    // Return a car
+
     public void returnCar(String model) {
         for (Car c : cars) {
             if (c.getModel().equalsIgnoreCase(model)) {
