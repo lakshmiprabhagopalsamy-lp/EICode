@@ -1,0 +1,206 @@
+//Main Application 
+public class CarRentalApp { 
+    public static void main(String[] args) {
+        java.util.Scanner sc = new java.util.Scanner(System.in);
+
+        // Singleton Pattern (Creational)
+        RentalManager manager = RentalManager.getInstance();
+
+        // Strategy Pattern (Behavioral) - 
+        manager.addCustomer("Alice", new EmailNotification());
+        manager.addCustomer("Bob", new SMSNotification());
+
+        while (true) {
+            System.out.println("\n=== Car Rental Management ===");
+            System.out.println("1. Add Car");
+            System.out.println("2. View Cars");
+            System.out.println("3. Rent Car");
+            System.out.println("4. Return Car");
+            System.out.println("5. Exit");
+            System.out.print("Enter choice: ");
+            int choice = sc.nextInt();
+            sc.nextLine(); 
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter car model: ");
+                    String model = sc.nextLine();
+                    System.out.print("Enter car type (SUV/Sedan/etc): ");
+                    String type = sc.nextLine();
+
+                    // Builder Pattern (Creational) 
+                    Car car = new CarBuilder().setModel(model).setType(type).build();
+                    manager.addCar(car);
+                    break;
+
+                case 2:
+                    manager.viewCars();
+                    break;
+
+                case 3:
+                    System.out.print("Enter car model to rent: ");
+                    String rentModel = sc.nextLine();
+                    manager.rentCar(rentModel);
+                    break;
+
+                case 4:
+                    System.out.print("Enter car model to return: ");
+                    String returnModel = sc.nextLine();
+                    manager.returnCar(returnModel);
+                    break;
+
+                case 5:
+                    System.out.println("Exiting system.");
+                    System.exit(0);
+                    break;
+
+                default:
+                    System.out.println("Invalid choice. Try again.");
+            }
+        }
+    }
+}
+
+// ------------------- Car class -------------------
+
+class Car {
+    private String model;
+    private String type;
+    private boolean available;
+
+    public Car(String model, String type) {
+        this.model = model;
+        this.type = type;
+        this.available = true;
+    }
+
+    public String getModel() { return model; }
+    public String getType() { return type; }
+    public boolean isAvailable() { return available; }
+    public void rent() { available = false; }
+    public void returnCar() { available = true; }
+
+    @Override
+    public String toString() {
+        return model + " (" + type + ") " + (available ? "[Available]" : "[Rented]");
+    }
+}
+
+//Builder Pattern (Creational)
+class CarBuilder {
+    private String model;
+    private String type;
+
+    public CarBuilder setModel(String model) {
+        this.model = model;
+        return this;
+    }
+
+    public CarBuilder setType(String type) {
+        this.type = type;
+        return this;
+    }
+
+    public Car build() {
+        return new Car(model, type);
+    }
+}
+
+// Strategy Pattern (Behavioral) 
+interface NotificationStrategy {
+    void notify(String message, String customerName);
+}
+
+class EmailNotification implements NotificationStrategy {
+    public void notify(String message, String customerName) {
+        System.out.println("Email to " + customerName + ": " + message);
+    }
+}
+
+class SMSNotification implements NotificationStrategy {
+    public void notify(String message, String customerName) {
+        System.out.println("SMS to " + customerName + ": " + message);
+    }
+}
+
+//Singleton: Rental Manager (Creational) 
+class RentalManager {
+    private static RentalManager instance;
+    private java.util.List<Car> cars;
+    private java.util.Map<String, NotificationStrategy> customerNotifications;
+
+    private RentalManager() {
+        cars = new java.util.ArrayList<>();
+        customerNotifications = new java.util.HashMap<>();
+    }
+
+    public static RentalManager getInstance() {
+        if (instance == null) {
+            instance = new RentalManager();
+        }
+        return instance;
+    }
+
+    // Add customer with notification strategy (Strategy Pattern)
+    public void addCustomer(String name, NotificationStrategy strategy) {
+        customerNotifications.put(name, strategy);
+    }
+
+    // Notify all customers (Strategy Pattern)
+    private void notifyCustomers(String message) {
+        for (java.util.Map.Entry<String, NotificationStrategy> entry : customerNotifications.entrySet()) {
+            entry.getValue().notify(message, entry.getKey());
+        }
+    }
+
+    // Add a new car
+    public void addCar(Car car) {
+        cars.add(car);
+        System.out.println("Car added: " + car.getModel());
+    }
+
+    // View all cars
+    public void viewCars() {
+        if (cars.isEmpty()) {
+            System.out.println("No cars available in the system.");
+            return;
+        }
+        for (Car c : cars) {
+            System.out.println(c);
+        }
+    }
+
+    // Rent a car
+    public void rentCar(String model) {
+        for (Car c : cars) {
+            if (c.getModel().equalsIgnoreCase(model)) {
+                if (c.isAvailable()) {
+                    c.rent();
+                    System.out.println("Car rented successfully: " + model);
+                    notifyCustomers("Car rented: " + model);
+                } else {
+                    System.out.println("Error: Car already rented.");
+                }
+                return;
+            }
+        }
+        System.out.println("Error: Car not found.");
+    }
+
+    // Return a car
+    public void returnCar(String model) {
+        for (Car c : cars) {
+            if (c.getModel().equalsIgnoreCase(model)) {
+                if (!c.isAvailable()) {
+                    c.returnCar();
+                    System.out.println("Car returned: " + model);
+                    notifyCustomers("Car returned: " + model);
+                } else {
+                    System.out.println("Error: Car was not rented.");
+                }
+                return;
+            }
+        }
+        System.out.println("Error: Car not found.");
+    }
+}
