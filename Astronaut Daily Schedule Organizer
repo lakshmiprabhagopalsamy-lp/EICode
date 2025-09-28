@@ -1,0 +1,108 @@
+import java.util.*;
+
+public class Main {
+    static class Task {
+        String description;
+        String startTime;
+        String endTime;
+        String priority;
+
+        Task(String description, String startTime, String endTime, String priority) {
+            this.description = description;
+            this.startTime = startTime;
+            this.endTime = endTime;
+            this.priority = priority;
+        }
+
+        @Override
+        public String toString() {
+            return startTime + " - " + endTime + ": " + description + " [" + priority + "]";
+        }
+    }
+
+    private static List<Task> tasks = new ArrayList<>();
+
+    private static void addTask(String desc, String start, String end, String priority) {
+        for (Task t : tasks) {
+            if (isConflict(start, end, t.startTime, t.endTime)) {
+                System.out.println("Error: Task conflicts with existing task \"" + t.description + "\".");
+                return;
+            }
+        }
+        tasks.add(new Task(desc, start, end, priority));
+        tasks.sort(Comparator.comparing(t -> t.startTime));
+        System.out.println("Task added successfully. No conflicts.");
+    }
+
+    private static void removeTask(String desc) {
+        for (Task t : tasks) {
+            if (t.description.equalsIgnoreCase(desc)) {
+                tasks.remove(t);
+                System.out.println("Task removed successfully.");
+                return;
+            }
+        }
+        System.out.println("Error: Task not found.");
+    }
+
+    private static void viewTasks() {
+        if (tasks.isEmpty()) {
+            System.out.println("No tasks scheduled for the day.");
+            return;
+        }
+        for (Task t : tasks) {
+            System.out.println(t);
+        }
+    }
+
+    private static boolean isConflict(String s1, String e1, String s2, String e2) {
+        return (s1.compareTo(e2) < 0 && e1.compareTo(s2) > 0);
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        while (true) {
+            System.out.println("\n=== Astronaut Daily Schedule Organizer ===");
+            System.out.println("1. Add Task");
+            System.out.println("2. Remove Task");
+            System.out.println("3. View Tasks");
+            System.out.println("4. Exit");
+            System.out.print("Choose option: ");
+            int choice = sc.nextInt();
+            sc.nextLine();
+
+            switch (choice) {
+                case 1:
+                    System.out.print("Enter description: ");
+                    String desc = sc.nextLine();
+                    System.out.print("Enter start time (HH:MM): ");
+                    String start = sc.nextLine();
+                    System.out.print("Enter end time (HH:MM): ");
+                    String end = sc.nextLine();
+                    System.out.print("Enter priority (High/Medium/Low): ");
+                    String priority = sc.nextLine();
+                    addTask(desc, start, end, priority);
+                    break;
+
+                case 2:
+                    System.out.print("Enter description of task to remove: ");
+                    String removeDesc = sc.nextLine();
+                    removeTask(removeDesc);
+                    break;
+
+                case 3:
+                    viewTasks();
+                    break;
+
+                case 4:
+                    System.out.println("Exiting program...");
+                    sc.close();
+                    return;
+
+                default:
+                    System.out.println("Invalid option. Try again.");
+            }
+        }
+    }
+}
