@@ -6,47 +6,70 @@ public class Main {
         String startTime;
         String endTime;
         String priority;
-
-        Task(String description, String startTime, String endTime, String priority) {
+        boolean isCompleted;
+        boolean isProfessional;
+        Task(String description, String startTime, String endTime, String priority, boolean isProfessional) {
             this.description = description;
             this.startTime = startTime;
             this.endTime = endTime;
             this.priority = priority;
+            this.isCompleted = false;
+            this.isProfessional = isProfessional;
         }
-
         @Override
         public String toString() {
-            return startTime + " - " + endTime + ": " + description + " [" + priority + "]";
+            String status = isCompleted ? "Completed" : "Pending";
+            String type = isProfessional ? "(Professional)" : "(Personal)";
+            return startTime + " - " + endTime + ": " + description + " [" + priority + "] " + type + " - " + status;
         }
     }
-
-    private static List<Task> tasks = new ArrayList<>();
-
-    private static void addTask(String desc, String start, String end, String priority) {
+    private static Map<String, List<Task>> astronautTasks = new HashMap<>();
+    private static void initializeProfessionalTasks() {
+        astronautTasks.put("A1", new ArrayList<>(Arrays.asList(
+                new Task("Spacewalk Maintenance", "09:00", "10:30", "High", true),
+                new Task("Satellite Communication", "11:00", "12:00", "Medium", true)
+        )));
+        astronautTasks.put("A2", new ArrayList<>(Arrays.asList(
+                new Task("Oxygen Level Check", "08:00", "09:00", "High", true),
+                new Task("Solar Panel Inspection", "14:00", "15:00", "Medium", true)
+        )));
+        astronautTasks.put("A3", new ArrayList<>(Arrays.asList(
+                new Task("Engine System Check", "10:00", "11:30", "High", true),
+                new Task("Fuel Monitoring", "16:00", "17:00", "Medium", true)
+        )));
+    }
+    private static void addTask(String astronaut, String desc, String start, String end, String priority) {
+        List<Task> tasks = astronautTasks.getOrDefault(astronaut, new ArrayList<>());
         for (Task t : tasks) {
             if (isConflict(start, end, t.startTime, t.endTime)) {
-                System.out.println("Error: Task conflicts with existing task \"" + t.description + "\".");
+                System.out.println("Error: Task conflicts with your existing task \"" + t.description + "\" (" +
+                        (t.isProfessional ? "Professional" : "Personal") + ").");
                 return;
             }
         }
-        tasks.add(new Task(desc, start, end, priority));
+        tasks.add(new Task(desc, start, end, priority, false));
         tasks.sort(Comparator.comparing(t -> t.startTime));
+        astronautTasks.put(astronaut, tasks);
         System.out.println("Task added successfully. No conflicts.");
     }
-
-    private static void removeTask(String desc) {
+    private static void removeTask(String astronaut, String desc) {
+        List<Task> tasks = astronautTasks.get(astronaut);
+        if (tasks == null) {
+            System.out.println("No tasks found for this astronaut.");
+            return;
+        }
         for (Task t : tasks) {
-            if (t.description.equalsIgnoreCase(desc)) {
+            if (t.description.equalsIgnoreCase(desc) && !t.isProfessional) {
                 tasks.remove(t);
                 System.out.println("Task removed successfully.");
                 return;
             }
         }
-        System.out.println("Error: Task not found.");
+        System.out.println("Error: Task not found or it is a professional task (cannot delete).");
     }
-
-    private static void viewTasks() {
-        if (tasks.isEmpty()) {
+    private static void viewTasks(String astronaut) {
+        List<Task> tasks = astronautTasks.get(astronaut);
+        if (tasks == null || tasks.isEmpty()) {
             System.out.println("No tasks scheduled for the day.");
             return;
         }
@@ -54,55 +77,104 @@ public class Main {
             System.out.println(t);
         }
     }
-
+    private static void markTaskComplete(String astronaut, String desc) {
+        List<Task> tasks = astronautTasks.get(astronaut);
+        if (tasks == null) {
+            System.out.println("No tasks found.");
+            return;
+        }
+        for (Task t : tasks) {
+            if (t.description.equalsIgnoreCase(desc)) {
+                t.isCompleted = true;
+                System.out.println("Task marked as completed.");
+                return;
+            }
+        }
+        System.out.println("Error: Task not found.");
+    }
     private static boolean isConflict(String s1, String e1, String s2, String e2) {
         return (s1.compareTo(e2) < 0 && e1.compareTo(s2) > 0);
     }
-
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-
-        while (true) {
-            System.out.println("\n=== Astronaut Daily Schedule Organizer ===");
-            System.out.println("1. Add Task");
-            System.out.println("2. Remove Task");
-            System.out.println("3. View Tasks");
-            System.out.println("4. Exit");
-            System.out.print("Choose option: ");
-            int choice = sc.nextInt();
-            sc.nextLine();
-
-            switch (choice) {
-                case 1:
-                    System.out.print("Enter description: ");
-                    String desc = sc.nextLine();
-                    System.out.print("Enter start time (HH:MM): ");
-                    String start = sc.nextLine();
-                    System.out.print("Enter end time (HH:MM): ");
-                    String end = sc.nextLine();
-                    System.out.print("Enter priority (High/Medium/Low): ");
-                    String priority = sc.nextLine();
-                    addTask(desc, start, end, priority);
-                    break;
-
-                case 2:
-                    System.out.print("Enter description of task to remove: ");
-                    String removeDesc = sc.nextLine();
-                    removeTask(removeDesc);
-                    break;
-
-                case 3:
-                    viewTasks();
-                    break;
-
-                case 4:
-                    System.out.println("Exiting program...");
-                    sc.close();
-                    return;
-
-                default:
-                    System.out.println("Invalid option. Try again.");
+    private static void viewProfessionalTasks() {
+        System.out.println("\n=== PROFESSIONAL TASK STATUS (ADMIN VIEW) ===");
+        for (String astronaut : astronautTasks.keySet()) {
+            System.out.println("\nAstronaut: " + astronaut);
+            for (Task t : astronautTasks.get(astronaut)) {
+                if (t.isProfessional) {
+                    System.out.println(" - " + t.description + " : " + (t.isCompleted ? "Completed" : "Pending"));
+                }
             }
         }
+    }
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        initializeProfessionalTasks();
+        while (true) {
+            System.out.println("\n=== Welcome to Astronaut Task Organizer ===");
+            System.out.println("1. Administrator");
+            System.out.println("2. Individual Astronaut");
+            System.out.println("3. Exit");
+            System.out.print("Choose role: ");
+            int role = sc.nextInt();
+            sc.nextLine();
+            if (role == 1) {
+                System.out.println("\n[ADMIN MODE]");
+                viewProfessionalTasks();
+            } else if (role == 2) {
+                System.out.print("Enter your name (A1/A2/A3): ");
+                String astronaut = sc.nextLine().trim();
+                astronaut = astronaut.substring(0, 1).toUpperCase() + astronaut.substring(1).toLowerCase();
+                astronautTasks.putIfAbsent(astronaut, new ArrayList<>());
+                while (true) {
+                    System.out.println("\n=== " + astronaut.toUpperCase() + "'s Personal Task Menu ===");
+                    System.out.println("1. Add Task");
+                    System.out.println("2. Remove Task");
+                    System.out.println("3. View All Tasks");
+                    System.out.println("4. Mark Task as Completed");
+                    System.out.println("5. Exit to Main Menu");
+                    System.out.print("Choose option: ");
+                    int choice = sc.nextInt();
+                    sc.nextLine();
+                    switch (choice) {
+                        case 1:
+                            System.out.print("Enter description: ");
+                            String desc = sc.nextLine();
+                            System.out.print("Enter start time (HH:MM): ");
+                            String start = sc.nextLine();
+                            System.out.print("Enter end time (HH:MM): ");
+                            String end = sc.nextLine();
+                            System.out.print("Enter priority (High/Medium/Low): ");
+                            String priority = sc.nextLine();
+                            addTask(astronaut, desc, start, end, priority);
+                            break;
+                        case 2:
+                            System.out.print("Enter task description to remove: ");
+                            String rdesc = sc.nextLine();
+                            removeTask(astronaut, rdesc);
+                            break;
+                        case 3:
+                            viewTasks(astronaut);
+                            break;
+                        case 4:
+                            System.out.print("Enter task description to mark complete: ");
+                            String cdesc = sc.nextLine();
+                            markTaskComplete(astronaut, cdesc);
+                            break;
+                        case 5:
+                            System.out.println("Returning to main menu...");
+                            break;
+                        default:
+                            System.out.println("Invalid option.");
+                    }
+                    if (choice == 5) break;
+                }
+            } else if (role == 3) {
+                System.out.println("Exiting program...");
+                break;
+            } else {
+                System.out.println("Invalid option.");
+            }
+        }
+        sc.close();
     }
 }
